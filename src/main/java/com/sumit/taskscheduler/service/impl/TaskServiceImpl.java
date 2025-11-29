@@ -17,6 +17,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.sumit.taskscheduler.util.CronExpressionUtil;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -36,9 +38,17 @@ public class TaskServiceImpl implements TaskService {
         task.setMaxRetries(request.getMaxRetries());
         task.setStatus("ACTIVE");
 
-        // For now, set next execution to 1 minute from now
-        // We'll improve this with real cron parsing later
-        task.setNextExecutionTime(LocalDateTime.now().plusMinutes(1));
+        // Validate and calculate next execution time from cron expression
+        if (!CronExpressionUtil.validateCronExpression(request.getCronExpression())) {
+            throw new IllegalArgumentException(
+                    "Invalid cron expression: " + request.getCronExpression() +
+                            ". Example valid expressions: '0 0 9 ? * *' (daily at 9 AM), " +
+                            "'0 */15 * ? * *' (every 15 min), '0 0 0 ? * 2' (every Monday)"
+            );
+        }
+        LocalDateTime nextExecution = CronExpressionUtil.getNextExecutionTime(request.getCronExpression());
+        task.setNextExecutionTime(nextExecution);
+        log.info("Next execution scheduled for: {}", nextExecution);
 
         Task savedTask = taskRepository.save(task);
         log.info("Task created successfully with ID: {}", savedTask.getId());
@@ -81,8 +91,16 @@ public class TaskServiceImpl implements TaskService {
             task.setDescription(request.getDescription());
         }
         if (request.getCronExpression() != null) {
+            if (!CronExpressionUtil.validateCronExpression(request.getCronExpression())) {
+                throw new IllegalArgumentException(
+                        "Invalid cron expression: " + request.getCronExpression() +
+                                ". Example valid expressions: '0 0 9 ? * *' (daily at 9 AM), " +
+                                "'0 */15 * ? * *' (every 15 min), '0 0 0 ? * 2' (every Monday)"
+                );
+            }
             task.setCronExpression(request.getCronExpression());
-            task.setNextExecutionTime(LocalDateTime.now().plusMinutes(1));
+            task.setNextExecutionTime(CronExpressionUtil.getNextExecutionTime(request.getCronExpression()));
+            log.info("Next execution rescheduled for: {}", task.getNextExecutionTime());
         }
         if (request.getPriority() != null) {
             task.setPriority(request.getPriority());
