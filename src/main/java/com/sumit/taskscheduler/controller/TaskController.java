@@ -1,6 +1,7 @@
 package com.sumit.taskscheduler.controller;
 
 import com.sumit.taskscheduler.dto.CreateTaskRequest;
+import com.sumit.taskscheduler.dto.ExecutionHistoryResponse;
 import com.sumit.taskscheduler.dto.TaskResponse;
 import com.sumit.taskscheduler.dto.UpdateTaskRequest;
 import com.sumit.taskscheduler.service.TaskService;
@@ -83,5 +84,12 @@ public class TaskController {
         log.info("Received request to resume task: {}", id);
         TaskResponse response = taskService.resumeTask(id);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/history")
+    public ResponseEntity<List<ExecutionHistoryResponse>> getTaskExecutionHistory(@PathVariable Long id) {
+        log.info("REST request to get execution history for task: {}", id);
+        List<ExecutionHistoryResponse> history = taskService.getTaskExecutionHistory(id);
+        return ResponseEntity.ok(history);
     }
 }

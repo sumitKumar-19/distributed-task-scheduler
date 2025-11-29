@@ -1,9 +1,11 @@
 package com.sumit.taskscheduler.service.impl;
 
 import com.sumit.taskscheduler.dto.CreateTaskRequest;
+import com.sumit.taskscheduler.dto.ExecutionHistoryResponse;
 import com.sumit.taskscheduler.dto.TaskResponse;
 import com.sumit.taskscheduler.dto.UpdateTaskRequest;
 import com.sumit.taskscheduler.entity.Task;
+import com.sumit.taskscheduler.repository.TaskExecutionHistoryRepository;
 import com.sumit.taskscheduler.repository.TaskRepository;
 import com.sumit.taskscheduler.service.TaskService;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +14,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.sumit.taskscheduler.dto.ExecutionHistoryResponse;
+import com.sumit.taskscheduler.entity.TaskExecutionHistory;
+import com.sumit.taskscheduler.repository.TaskExecutionHistoryRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,6 +29,8 @@ import com.sumit.taskscheduler.util.CronExpressionUtil;
 @Slf4j
 public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
+    private final TaskExecutionHistoryRepository executionHistoryRepository;
+
 
     @Override
     public TaskResponse createTask(CreateTaskRequest request) {
@@ -166,6 +173,33 @@ public class TaskServiceImpl implements TaskService {
                 .lastExecutionTime(task.getLastExecutionTime())
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
+                .build();
+    }
+
+    @Override
+    public List<ExecutionHistoryResponse> getTaskExecutionHistory(Long taskId) {
+        log.info("Fetching execution history for task: {}", taskId);
+
+        // Verify task exists
+        if (!taskRepository.existsById(taskId)) {
+            throw new RuntimeException("Task not found with ID: " + taskId);
+        }
+
+        return executionHistoryRepository.findTop10ByTaskIdOrderByExecutionTimeDesc(taskId)
+                .stream()
+                .map(this::mapToHistoryResponse)
+                .collect(Collectors.toList());
+    }
+
+    private ExecutionHistoryResponse mapToHistoryResponse(TaskExecutionHistory history) {
+        return ExecutionHistoryResponse.builder()
+                .id(history.getId())
+                .taskId(history.getTaskId())
+                .executionTime(history.getExecutionTime())
+                .status(history.getStatus())
+                .errorMessage(history.getErrorMessage())
+                .executionDurationMs(history.getExecutionDurationMs())
+                .createdAt(history.getCreatedAt())
                 .build();
     }
 

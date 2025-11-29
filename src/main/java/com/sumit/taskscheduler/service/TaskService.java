@@ -1,6 +1,7 @@
 package com.sumit.taskscheduler.service;
 
 import com.sumit.taskscheduler.dto.CreateTaskRequest;
+import com.sumit.taskscheduler.dto.ExecutionHistoryResponse;
 import com.sumit.taskscheduler.dto.TaskResponse;
 import com.sumit.taskscheduler.dto.UpdateTaskRequest;
 import org.springframework.data.domain.Page;
@@ -24,5 +25,7 @@ public interface TaskService {
     TaskResponse pauseTask(Long id);
 
     TaskResponse resumeTask(Long id);
+
+    List<ExecutionHistoryResponse> getTaskExecutionHistory(Long taskId);
 
 }
