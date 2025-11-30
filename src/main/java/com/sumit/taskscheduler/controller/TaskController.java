@@ -4,6 +4,7 @@ import com.sumit.taskscheduler.dto.CreateTaskRequest;
 import com.sumit.taskscheduler.dto.ExecutionHistoryResponse;
 import com.sumit.taskscheduler.dto.TaskResponse;
 import com.sumit.taskscheduler.dto.UpdateTaskRequest;
+import com.sumit.taskscheduler.executor.TaskExecutionEngine;
 import com.sumit.taskscheduler.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import java.util.List;
 public class TaskController {
 
     private final TaskService taskService;
+    private final TaskExecutionEngine executionEngine;
 
     @PostMapping
     public ResponseEntity<TaskResponse> createTask(@Valid @RequestBody CreateTaskRequest request) {
@@ -92,4 +94,12 @@ public class TaskController {
         List<ExecutionHistoryResponse> history = taskService.getTaskExecutionHistory(id);
         return ResponseEntity.ok(history);
     }
+
+    @GetMapping("/executor/stats")
+    public ResponseEntity<TaskExecutionEngine.ExecutorStats> getExecutorStats() {
+        log.info("REST request to get executor statistics");
+        TaskExecutionEngine.ExecutorStats stats = executionEngine.getStats();
+        return ResponseEntity.ok(stats);
+    }
+
 }
